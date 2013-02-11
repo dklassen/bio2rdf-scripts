@@ -327,7 +327,7 @@ class ChemblParser extends RDFFactory {
 
 		$this->set_write_file("targets");
 
-		$allIDs = mysql_query("SELECT DISTINCT * FROM target_dictionary");
+		$allIDs = mysql_query("SELECT DISTINCT * FROM target_dictionary, binding_sites where target_dictionary.tid == binding_sites.tid");
 
 		$num = mysql_numrows($allIDs);
 
@@ -336,65 +336,45 @@ class ChemblParser extends RDFFactory {
 			$target = "chembl:target_". $row['tid'];
 			$this->AddRDF($this->QQuad($target,"rdf:type","chembl_vocabulary:Target"));
 
-			if ($row['target_type'] == 'PROTEIN') {
-				$this->AddRDF($this->QQuad($target,"rdfs:subClassOf","chembl_vocabulary:Protein"));
-			} else {
-				$this->AddRDF($this->QQuad($target,"chembl_vocabulary:hasTargetType","chembl:".$row['target_type']));
+			if ($row['target_type']) {
+				$this->AddRDF($this->QQuad($target,"chembl_vocabulary:target_type","chembl:".$row['target_type']));
 			}
 
 			$chembl = "chembl:". $row['chembl_id'];
 
 			$this->AddRDF($this->QQuad($chembl,"owl:equivalentClass",$target));
 			$this->AddRDF($this->QQuad($target,"owl:equivalentClass",$chembl));
-			$this->AddRDF($this->QQuad($target,"dc:identifier",$row['chembl_id']));
+			$this->AddRDF($this->QQuadl($chembl,"dc:identifier",$row['chembl_id']));
 
-			if ($row['organism']){
-				$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:organism",$row['organism']));
-			}
-			if ($row['description']){
-				$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:hasDescription",str_replace("\"", "\\\"", $row['description']) ));
-			}
-			if ($row['synonyms']) {
-				$synonyms = preg_split("/[;]+/", $row['synonyms']);
-				foreach ($synonyms as $i => $synonym) {
-					$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:hasSynonym",str_replace("\"", "\\\"", trim($synonym))));
-				}
-			}
-			if ($row['keywords']) {
-				$keywords = preg_split("/[;]+/", $row['keywords']);
-				foreach ($keywords as $i => $keyword) {
-					$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:hasKeyword",str_replace("\"", "\\\"", trim($keyword)) ));
-				}
-			}
-			if ($row['protein_sequence']){
-				$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:hasSequence",$row['protein_sequence']));
-			}
-			if ($row['ec_number']) {
-				$this->AddRDF($this->QQuadl($target,"dc:identifier",$row['ec_number']));
-			}
-			if ($row['protein_accession']) {
-				$this->AddRDF($this->QQuad($target,"owl:equivalentClass","uniprot:". $row['protein_accession']));
-			}
 			if ($row['tax_id']){
-				$this->AddRDF($this->QQuad($target, "owl:equivalentClass","taxon:".$row['tax_id']));
+				$this->AddRDF($this->QQuad($target,"chembl_vocabulary:taxon","taxon:".$row['tax_id']));
 			}
 
-			# classifications
-			$class = mysql_query("SELECT DISTINCT * FROM target_class WHERE tid = \"" . $row['tid'] . "\"");
-			if ($classRow = mysql_fetch_assoc($class)) {
-				if ($classRow['l1']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL1", str_replace("\"", "\\\"", $classRow['l1'])));
-				if ($classRow['l2']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL2", str_replace("\"", "\\\"", $classRow['l2'])));
-				if ($classRow['l3']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL3", str_replace("\"", "\\\"", $classRow['l3'])));
-				if ($classRow['l4']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL4", str_replace("\"", "\\\"", $classRow['l4'])));
-				if ($classRow['l5']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL5", str_replace("\"", "\\\"", $classRow['l5'])));
-				if ($classRow['l6']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL6", str_replace("\"", "\\\"", $classRow['l6'])));
-				if ($classRow['l7']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL7", str_replace("\"", "\\\"", $classRow['l7'])));
-				if ($classRow['l8']) $this->AddRDF($this->QQuadl( $target,"chembl_vocabulary:classL8", str_replace("\"", "\\\"", $classRow['l8'])));
+			if($row['pref_name']){
+				$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:pref_name",$this->SafeLiteral($row['pref_name'])));
 			}
 
-			if ($row['pref_name'])
-				$this->AddRDF($this->QQuadl($target,"dc:title",$row['pref_name']));
+			if($row['site_id']){
+				$binding_site = "chembl:bindingsite_".$row['site_id'];
+				$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:binding_site",$binding_site));
+				$this->AddRDF($this->QQuadl($binding_site,"rdfs:label",$this->SafeLiteral($row['site_name'])))
 			}
+
+// SELECT TableA.*, TableB.*, TableC.*, TableD.*
+// FROM TableA
+//     JOIN TableB
+//         ON TableB.aID = TableA.aID
+//     JOIN TableC
+//         ON Tableb.cID = TableB.cID
+//     JOIN TableD
+//         ON TableD.dID = TableA.dID
+// WHERE DATE(TableC.date)=date(now()) 
+
+			$components = mysql_query("select * from ")
+
+		}
+
+
 	}
 
 	/*
