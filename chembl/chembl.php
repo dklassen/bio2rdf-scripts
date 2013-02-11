@@ -135,7 +135,8 @@ class ChemblParser extends RDFFactory {
 	}
 
 	/*
-	*	process activities
+	*	Process experimental data
+	*		ACTIVITIES
 	*/
 	function process_activities(){
 
@@ -147,29 +148,58 @@ class ChemblParser extends RDFFactory {
 			$activity = "chembl:activity_".$row['activity_id'];
 			$this->AddRDF($this->QQuad($activity,"rdf:type","chembl_vocabulary:Activity"));
 
-		if ($row['doc_id'] != '-1') {
-			$reference = "chembl:reference_".$row["doc_id"];
-			$this->AddRDF($this->QQuad($activity,"chembl_vocabulary:citesAsDataSource",$reference));
-		}
+			if ($row['doc_id'] != '-1') {
+				$reference = "chembl:reference_".$row["doc_id"];
+				$this->AddRDF($this->QQuad($activity,"chembl_vocabulary:citesAsDataSource",$reference));
+			}
+
 			$assay = "chembl:assay_".$row['assay_id'];
 			$molecule = "chembl:compound_".$row['molregno'];
 
-			$this->AddRDF($this->QQuad($activity,"chembl_vocabulary:onAssay",$assay));
-			$this->AddRDF($this->QQuad($activity,"forMolecule",$molecule));
+			$this->AddRDF($this->QQuad($activity,"chembl_vocabulary:assay",$assay));
+			$this->AddRDF($this->QQuad($assay,"chembl_vocabulary:activity",$activity));
+			$this->AddRDF($this->QQuad($activity,"chembl_vocabulary:molecule",$molecule));
 
-		if ($row['relation']) {
-			$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:relation",  $row['relation'] ));
-		}
-		if ($row['standard_value']) {
-			$this->AddRDF($this->QQuadl($activity,"chembl_vocabulary:standardValue",$row['standard_value']));
-			$this->AddRDF($this->QQuadl($activity,"chembl_vocabulary:standardUnits",$row['standard_units']));
-			$this->AddRDF($this->QQuadl($activity,"chembl_vocabulary:standardValue",$row['standard_type']));
-		}
+			if ($row['standard_relation']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:standard_relation",  $row['standard_relation'] ));
+			}
+
+			if ($row['standard_units']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:standard_units",  $row['standards_units'] ));
+			}
+
+			if ($row['standard_value']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:standard_value",  $row['standard_value'] ));
+			}
+
+			if ($row['standard_type']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:standard_type",  $row['standard_type'] ));
+			}
+
+			if ($row['published_units']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:published_units",  $row['published_units'] ));
+			}
+			
+			if ($row['published_value']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:published_value",  $row['published_value'] ));
+			}
+
+			if ($row['published_type']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:published_type",  $row['published_type'] ));
+			}
+
+			if ($row['standard_flag']) {
+				$this->AddRDF($this->QQuadl($activity, "chembl_vocabulary:standard_flag",  $row['standard_flag'] ));
+			}
+
+			if ($row['activity_comment']) {
+				$this->AddRDF($this->QQuadl($activity, "rdfs:comment",  $row['activity_comment'] ));
+			}
 
 		}
 	}
 	/*
-	*	process the compounds table into RDF
+	*	Process Compound Information
 	*/
 	function process_compounds() {
 		$this->set_write_file("compounds");
@@ -187,29 +217,30 @@ class ChemblParser extends RDFFactory {
 		while ($refRow = mysql_fetch_assoc($refs)) {
 			if ($refRow['doc_id'])
 				$this->AddRDF($this->QQuad($molecule,"chembl_vocabulary:citesAsDataSource","chembl:reference_".$refRow['doc_id']));
-			}
+		}
 
-			# get the compound type, ChEBI, and ChEMBL identifiers
-			$chebi = mysql_query("SELECT DISTINCT * FROM molecule_dictionary WHERE molregno = $molregno");
-			if ($chebiRow = mysql_fetch_assoc($chebi)) {
+		# get the compound type, ChEBI, and ChEMBL identifiers
+		$chebi = mysql_query("SELECT DISTINCT * FROM molecule_dictionary WHERE molregno = $molregno");
+		while ($chebiRow = mysql_fetch_assoc($chebi)) {
 			
 			if ($chebiRow['molecule_type']) {
-			  if ($chebiRow['molecule_type'] == "Small molecule") {
-			  		$this->AddRDF($this->QQuad($molecule,"rdfs:subClassOf","chembl_vocabulary:SmallMolecule"));
-			  } else if ($chebiRow['molecule_type'] == "Protein") {
-			   		$this->AddRDF($this->QQuad($molecule,"rdfs:subClassOf","chembl_vocabulary:Protein"));
-			  } else if ($chebiRow['molecule_type'] == "Cell") {
-			  		$this->AddRDF($this->QQuad($molecule,"rdfs:subClassOf","chembl_vocabulary:Cell"));
-			  } else if ($chebiRow['molecule_type'] == "Oligosaccharide") {
-			   		$this->AddRDF($this->QQuad($molecule,"rdfs:subClassOf","chembl_vocabulary:Oligosaccharide"));
-			  } else if ($chebiRow['molecule_type'] == "Oligonucleotide") {
-			   		$this->AddRDF($this->QQuad($molecule,"rdfs:subClassOf","chembl_vocabulary:Oligonucleotide"));
-			  } else if ($chebiRow['molecule_type'] == "Antibody") {
-			  		$this->AddRDF($this->QQuad($molecule,"rdfs:subClassOf","chembl_vocabulary:Antibody"));
-			  }
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:molecule_type",$this->SafeLiteral($row['molecule_type'])));
 			}
-			if ($chebiRow['max_phase'] == "4") {
-				$this->AddRDF($this->QQuad($molecule,"chembl_vocabulary:hasRole","chembl_vocabulary:Drug"));
+
+			if ($chebiRow['max_phase']) {
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:max_phase",$this->SafeLiteral($row['max_phase'])));
+			}
+
+			if ($chebiRow['structure_type']) {
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:structure_type",$this->SafeLiteral($row['structure_type'])));
+			}
+
+			if ($chebiRow['natural_product']) {
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:natural_product",$this->SafeLiteral($row['natural_product'])));
+			}
+
+			if ($chebiRow['black_box_warning']) {
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:black_box_warning",$this->SafeLiteral($row['black_box_warning'])));
 			}
 
 			$chebi = "chebi:".$chebiRow['chebi_id'];
@@ -220,21 +251,16 @@ class ChemblParser extends RDFFactory {
 			$this->AddRDF($this->QQuad($chembl,"owl:equivalentClass",$molecule));
 			$this->AddRDF($this->QQuad($chebi,"owl:equivalentClass",$chembl));
 
-			// add some human readable labels and bio2rdf requirements
+			// Add  human readable labels and bio2rdf requirements
 			$this->AddRDF($this->QQuadl($chebi,"dc:identifier",$chebiRow['chebi_id']));
 			$this->AddRDF($this->QQuadl($chembl,"dc:identifier",$chebiRow['chembl_id']));
 		}
-
+		
 		# get the structure information
 		$structs = mysql_query("SELECT DISTINCT * FROM compound_structures WHERE molregno = $molregno");
 		while ($struct = mysql_fetch_assoc($structs)) {
 			if ($struct['canonical_smiles']) {
-			  $smiles = $struct['canonical_smiles'];
-			  $smiles = str_replace("\\", "\\\\", $smiles);
-			  $smiles = str_replace("\n", "", $smiles);
-			 
-			  $this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:smiles",$smiles));
-
+			  $this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:smiles",$this->SafeLiteral($struct['canonical_smiles'])));
 			}
 			if ($struct['standard_inchi']) {
 				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:standardInchi",$struct['standard_inchi']));
@@ -294,6 +320,9 @@ class ChemblParser extends RDFFactory {
 		mysql_select_db($db) or die(mysql_error());
 	}
 
+	/*
+	* Process Target Information
+	*/
 	function process_targets() {
 
 		$this->set_write_file("targets");
@@ -369,7 +398,11 @@ class ChemblParser extends RDFFactory {
 	}
 
 	/*
-	*	parse the assays tables
+	*	Parse experimental data tables
+	*		ASSAYS
+	*		ASSAY_TYPE
+	*
+	*	NOTE: UPDATED for v 15
 	*/
 	function process_assays() {
 
@@ -380,58 +413,70 @@ class ChemblParser extends RDFFactory {
 		    "WHERE assays.assay_type = assay_type.assay_type"
 		);
 
-		$num = mysql_numrows($allIDs);
+		$num = mysql_numrows($this->allIDs);
 
 		while ($row = mysql_fetch_assoc($allIDs)) {
 
 		  $assay = "chembl:assay_".$row['assay_id'];
 		  $this->AddRDF($this->QQuad($assay,"rdf:type","chembl_vocabulary:Assay"));
 
-		  //chembl assay id
+		  // chembl assay id
 		  $chembl = "chembl:". $row['chembl_id'];
 		  $this->AddRDF($this->QQuadl($assay,"dc:identifier",$row['chembl_id']));
 		  $this->AddRDF($this->QQuad($assay,"owl:equivalentClass",$chembl));
 		  $this->AddRDF($this->QQuad($chembl,"owl:equivalentClass",$assay));
 		  $this->WriteRDFBufferToWriteFile();
 
+		  // DESCRIPTION
 		  if ($row['description']) {
-		    # clean up description
-		    $description = $row['description'];
-		    $description = str_replace("\\", "\\\\", $description);
-		    $description = str_replace("\"", "\\\"", $description);
-		    $this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:hasDescription",$description));
+		    $this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:description",$this->SafeLiteral($row['description'])));
 		  }
 
+		  // DOC ID
 		  if ($row['doc_id']){
-		  	$this->AddRDF($this->QQuad($assay,"chembl_vocabulary:citesAsDataSource","chembl:reference_".$row['doc_id']));
+		  	$this->AddRDF($this->QQuad($assay,"chembl_vocabulary:doc_id","chembl:reference_".$row['doc_id']));
+		  }		  
+
+		  // TID : Target id
+		  if ($row['tid']) {
+		  	$chembl_target = "chembl:"."target_".$row['tid'];
+		  	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:target",$chembl_target));
+		  }
+			
+		  // ASSAY_CATEGOry
+		  if($row['assay_category']){
+		  	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_category",$this->SafeLiteral($row['assay_category'])));
 		  }
 
-		  $props = mysql_query("SELECT DISTINCT * FROM assay2target WHERE assay_id = " . $row['assay_id']);
-		  
-		  while ($prop = mysql_fetch_assoc($props)) {		  	  
-		    if ($prop['tid']) {
-		      $target = "chembl:target_".$prop['tid'];
-		      $this->AddRDF($this->QQuad($assay,"chembl_vocabulary:hasTarget",$target));
-
-		      if ($prop['confidence_score']) {
-		        $targetScore = "chembl:tscore_".md5($assay.$prop['tid']);
-		        $this->AddRDF($this->QQuad($assay,"chembl_vocabulary:hasTargetScore",$targetScore));
-		        $this->AddRDF($this->QQuad($targetScore,"chembl_vocabulary:forTarget",$target));
-		        $this->AddRDF($this->QQuadl($targetScore,"rdf:value",$prop['confidence_score']));
-		      }
-		    }
-
-		     $this->WriteRDFBufferToWriteFile();
-
+		  // ASSAY_TISSUE
+		  if ($row['assay_tissue']){
+		  		$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_tissue",$this->SafeLiteral($row['asasy_tissue'])));
 		  }
 
-		  $this->AddRDF($this->QQuad($assay,"chembl_vocabulary:hasAssayType","chembl_vocabulary:".$row['assay_desc']));
+		  // ASSAY_CELL_TYPE
+		  if($row['assay_cell_type']){
+		  		$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_cell_type",$this->SafeLiteral($row['assay_cell_type'])));
+		  }
+
+		  // SUBCELLULAR_FRACTION
+		  if ($row['subcellular_fraction']){
+		  	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:subcellular_fraction",$this->SafeLiteral($row['subcellular_fraction'])));
+		  }
+
+		  // ASSAY_TEST_TYPE
+		  if ($row['assay_test_type']){
+		  	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_test_type",$this->SafeLiteral($row['assay_test_type'])));
+		  }
+
+		  $this->AddRDF($this->QQuad($assay,"chembl_vocabulary:assay_desc","chembl_vocabulary:".$row['assay_desc']));
 		  $this->WriteRDFBufferToWriteFile();
+		 
 		}
 	}
 
 	/*
 	* process references and information sources about assays
+	* NOTE: Not updated for v15
 	*/
 	function process_references(){
 
