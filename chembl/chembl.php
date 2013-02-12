@@ -327,17 +327,17 @@ class ChemblParser extends RDFFactory {
 
 		$this->set_write_file("targets");
 
-		$allIDs = mysql_query("SELECT DISTINCT * FROM target_dictionary, binding_sites where target_dictionary.tid == binding_sites.tid");
+		$allIDs = mysql_query("SELECT DISTINCT * FROM target_dictionary, binding_sites where target_dictionary.tid = binding_sites.tid");
 
 		$num = mysql_numrows($allIDs);
 
-		while ($row = mysql_fetch_assoc($allIDs)) {
+		while ($row = mysql_fetch_array($allIDs)) {
 
 			$target = "chembl:target_". $row['tid'];
 			$this->AddRDF($this->QQuad($target,"rdf:type","chembl_vocabulary:Target"));
 
 			if ($row['target_type']) {
-				$this->AddRDF($this->QQuad($target,"chembl_vocabulary:target_type","chembl:".$row['target_type']));
+				$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:target_type","chembl:".preg_replace("/\s/", "_", $row['target_type'])));
 			}
 
 			$chembl = "chembl:". $row['chembl_id'];
@@ -356,23 +356,55 @@ class ChemblParser extends RDFFactory {
 
 			if($row['site_id']){
 				$binding_site = "chembl:bindingsite_".$row['site_id'];
-				$this->AddRDF($this->QQuadl($target,"chembl_vocabulary:binding_site",$binding_site));
-				$this->AddRDF($this->QQuadl($binding_site,"rdfs:label",$this->SafeLiteral($row['site_name'])))
+				$this->AddRDF($this->QQuad($target,"chembl_vocabulary:binding_site",$binding_site));
+				$this->AddRDF($this->QQuadl($binding_site,"rdfs:label",$this->SafeLiteral($row['site_name'])));
 			}
 
-// SELECT TableA.*, TableB.*, TableC.*, TableD.*
-// FROM TableA
-//     JOIN TableB
-//         ON TableB.aID = TableA.aID
-//     JOIN TableC
-//         ON Tableb.cID = TableB.cID
-//     JOIN TableD
-//         ON TableD.dID = TableA.dID
-// WHERE DATE(TableC.date)=date(now()) 
+						$this->WriteRDFBufferToWriteFile();
 
-			$components = mysql_query("select * from ")
 
 		}
+		
+		# target components
+		$components = mysql_query("SELECT DISTINCT target_components.*, component_sequences.* from target_components join component_sequences on component_sequences.component_id = target_components.component_id");
+		$component_rows = mysql_numrows($components);
+		while( $row = mysql_fetch_array($components)){
+			$target = "chembl:target_".$row['tid'];
+			$t_component = "chembl:componet_".$row['component_id'];
+
+			$this->AddRDF($this->QQuad($target,"chembl_vocabulary:component",$t_component));
+			$this->AddRDF($this->QQuad($t_component,"rdf:type","chembl_vocabulary:Target_Component"));
+
+			if($row['component_type']){
+				$this->AddRDF($this->QQuadl($t_component,"chembl_vocabulary:component_type",$row['component_type']));
+			}
+			if($row['accession']){
+				$this->AddRDF($this->QQuad($t_component,"chembl_vocabulary:uniprot_accession","uniprot:".$row['accession']));	
+			}
+
+			if($row['sequence']){
+				$this->AddRDF($this->QQuadl($t_component,"chembl_vocabulary:sequence",$this->SafeLiteral($row['sequence'])));	
+			}
+
+			if($row['description']){
+				$this->AddRDF($this->QQuadl($t_component,"rdfs:comment",$this->SafeLiteral($row['description'])));	
+			}
+
+			if($row['tax_id']){
+				$this->AddRDF($this->QQuad($t_component,"chembl_vocabulary:taxon","taxon:".$row['tax_id']));	
+			}
+
+			if($row['db_source']){
+				$this->AddRDF($this->QQuadl($t_component,"chembl_vocabulary:db_source",$this->SafeLiteral($row['db_source'])));
+			}
+
+			if($row['db_version']){
+				$this->AddRDF($this->QQuadl($t_component,"chembl_vocabulary:db_version",$this->SafeLiteral($row['db_version'])));
+			}
+
+			$this->WriteRDFBufferToWriteFile();
+
+		} 
 
 
 	}
