@@ -420,14 +420,11 @@ class ChemblParser extends RDFFactory {
 
 		$this->set_write_file("assays");
 
-		$allIDs = mysql_query(
-		    "SELECT DISTINCT * FROM assays, assay_type " .
-		    "WHERE assays.assay_type = assay_type.assay_type"
-		);
+		$allIDs = mysql_query("SELECT DISTINCT * FROM assays, assay_type WHERE assays.assay_type = assay_type.assay_type" );
 
-		$num = mysql_numrows($this->allIDs);
+		//$num = mysql_numrows($this->allIDs);
 
-		while ($row = mysql_fetch_assoc($allIDs)) {
+		while ($row = mysql_fetch_array($allIDs)) {
 
 		  $assay = "chembl:assay_".$row['assay_id'];
 		  $this->AddRDF($this->QQuad($assay,"rdf:type","chembl_vocabulary:Assay"));
@@ -462,7 +459,7 @@ class ChemblParser extends RDFFactory {
 
 		  // ASSAY_TISSUE
 		  if ($row['assay_tissue']){
-		  		$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_tissue",$this->SafeLiteral($row['asasy_tissue'])));
+		  		$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_tissue",$this->SafeLiteral($row['assay_tissue'])));
 		  }
 
 		  // ASSAY_CELL_TYPE
@@ -471,9 +468,9 @@ class ChemblParser extends RDFFactory {
 		  }
 
 		  // SUBCELLULAR_FRACTION
-		  if ($row['subcellular_fraction']){
-		  	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:subcellular_fraction",$this->SafeLiteral($row['subcellular_fraction'])));
-		  }
+		  // if ($row['subcellular_fraction']){
+		  // 	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:subcellular_fraction",$this->SafeLiteral($row['subcellular_fraction'])));
+		  // }
 
 		  // ASSAY_TEST_TYPE
 		  if ($row['assay_test_type']){
