@@ -206,41 +206,41 @@ class ChemblParser extends RDFFactory {
 
 		$allIDs = mysql_query("SELECT DISTINCT molregno FROM molecule_dictionary");
 
-		$num = mysql_numrows($allIDs);
+		//$num = mysql_numrows($allIDs);
 
-		while ($row = mysql_fetch_assoc($allIDs)) {
+		while ($row = mysql_fetch_array($allIDs)) {
 		$molregno = $row['molregno'];
 		$molecule = "chembl:compound_".$molregno;
 
 		# get the literature references
 		$refs = mysql_query("SELECT DISTINCT doc_id FROM compound_records WHERE molregno = $molregno");
-		while ($refRow = mysql_fetch_assoc($refs)) {
+		while ($refRow = mysql_fetch_array($refs)) {
 			if ($refRow['doc_id'])
 				$this->AddRDF($this->QQuad($molecule,"chembl_vocabulary:citesAsDataSource","chembl:reference_".$refRow['doc_id']));
 		}
 
 		# get the compound type, ChEBI, and ChEMBL identifiers
-		$chebi = mysql_query("SELECT DISTINCT * FROM molecule_dictionary WHERE molregno = $molregno");
-		while ($chebiRow = mysql_fetch_assoc($chebi)) {
+		$chebirows = mysql_query("SELECT DISTINCT * FROM molecule_dictionary WHERE molregno = $molregno");
+		while ($chebiRow = mysql_fetch_array($chebirows)) {
 			
 			if ($chebiRow['molecule_type']) {
-				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:molecule_type",$this->SafeLiteral($row['molecule_type'])));
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:molecule_type",$this->SafeLiteral($chebiRow['molecule_type'])));
 			}
 
 			if ($chebiRow['max_phase']) {
-				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:max_phase",$this->SafeLiteral($row['max_phase'])));
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:max_phase",$this->SafeLiteral($chebiRow['max_phase'])));
 			}
 
 			if ($chebiRow['structure_type']) {
-				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:structure_type",$this->SafeLiteral($row['structure_type'])));
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:structure_type",$this->SafeLiteral($chebiRow['structure_type'])));
 			}
 
 			if ($chebiRow['natural_product']) {
-				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:natural_product",$this->SafeLiteral($row['natural_product'])));
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:natural_product",$this->SafeLiteral($chebiRow['natural_product'])));
 			}
 
 			if ($chebiRow['black_box_warning']) {
-				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:black_box_warning",$this->SafeLiteral($row['black_box_warning'])));
+				$this->AddRDF($this->QQuadl($molecule,"chembl_vocabulary:black_box_warning",$this->SafeLiteral($chebiRow['black_box_warning'])));
 			}
 
 			$chebi = "chebi:".$chebiRow['chebi_id'];
@@ -403,10 +403,7 @@ class ChemblParser extends RDFFactory {
 			}
 
 			$this->WriteRDFBufferToWriteFile();
-
 		} 
-
-
 	}
 
 	/*
@@ -449,7 +446,7 @@ class ChemblParser extends RDFFactory {
 		  // TID : Target id
 		  if ($row['tid']) {
 		  	$chembl_target = "chembl:"."target_".$row['tid'];
-		  	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:target",$chembl_target));
+		  	$this->AddRDF($this->QQuad($assay,"chembl_vocabulary:target",$chembl_target));
 		  }
 			
 		  // ASSAY_CATEGOry
@@ -477,7 +474,8 @@ class ChemblParser extends RDFFactory {
 		  	$this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_test_type",$this->SafeLiteral($row['assay_test_type'])));
 		  }
 
-		  $this->AddRDF($this->QQuad($assay,"chembl_vocabulary:assay_desc","chembl_vocabulary:".$row['assay_desc']));
+		  $this->AddRDF($this->QQuadl($assay,"chembl_vocabulary:assay_desc",$this->SafeLiteral($row['assay_desc'])));
+		  
 		  $this->WriteRDFBufferToWriteFile();
 		 
 		}
