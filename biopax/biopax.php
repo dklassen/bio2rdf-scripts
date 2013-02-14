@@ -63,9 +63,7 @@ class BioPAXParser extends RDFFactory
             $gz=true;
             $outfile.=".gz";
         } 
-        preg_match('/.*(pathwaycommons[A-Za-z0-9-]+.owl)/',$this->GetParameterValue('download_url'),$filematch);
         
-        // Download
         if ($this->GetParameterValue('download')){
             $download = $this->GetParameterValue('download');
             echo "INFO: Download file from ".$download;
@@ -107,7 +105,8 @@ class BioPAXParser extends RDFFactory
     ); // end mapping 
 
 
-        $handle = fopen($indir."pathwaycommons2-Sept2012.owl","r");
+        preg_match('/.*(pathwaycommons[A-Za-z0-9-]+.owl)/',$this->GetParameterValue('download_url'),$filematch);
+        $handle = fopen($indir.$filematch[1],"r");
         if ($handle) {
             while (($buffer = fgets($handle, 4096)) != false){
 
