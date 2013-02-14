@@ -1,6 +1,6 @@
 <?php
 /**
-Copyright (C) 2012 Michel Dumontier
+Copyright (C) 2012 Michel Dumontier, Dana Klassen
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,7 @@ SOFTWARE.
  * BioPAX RDFizer
  * @version 1.0
  * @author Michel Dumontier
+ * @author Dana Klassen
  * @description 
 */
 require('../../php-lib/rdfapi.php');
@@ -54,12 +55,16 @@ class BioPAXParser extends RDFFactory
 	{	
         $indir  = $this->GetParameterValue('indir');
         $outdir = $this->GetParameterValue('outdir');
-                
+        $gz =  false;
         $file = $indir."pathwaycommons.owl.zip";
-        $outfile = $outdir."pathwaycommons_map.nt.gz";
-        
+        $outfile = $outdir."pathwaycommons_map.nt";
+
+        if($this->GetParameterValue('gzip') ){
+            $gz=true;
+            $outfile.=".gz";
+        } 
         preg_match('/.*(pathwaycommons[A-Za-z0-9-]+.owl)/',$this->GetParameterValue('download_url'),$filematch);
-         echo $unzipped_file;
+        
         // Download
         if ($this->GetParameterValue('download')){
             $download = $this->GetParameterValue('download');
@@ -77,7 +82,7 @@ class BioPAXParser extends RDFFactory
         }
         echo "INFO: Unzipped pathway commons file\n";
 
-        $this->SetWriteFile($outfile,TRUE);
+        $this->SetWriteFile($outfile,$gz);
         echo "INFO: Setting outfile to ".$outfile."\n";
 
         // Convert to ntriples
@@ -86,32 +91,36 @@ class BioPAXParser extends RDFFactory
 
         // Generate links mapping identifiers.org to bio2rdf.org
         // this would be so much easier with sed :) 
-       
-        // match pubmed identifiers
+
+        $mapping = array(
+        // match pubmed identifiers    
         // http://identifiers.org/pubmed/11447118
-        $pubmed = "/.*pubmed\/(\d+)\"/";
+        'pubmed' => array('pattern'=> "/http:.*pubmed\/(\d+)/", 'ns'=>'pubmed'),
 
         // taxonomy
         // http://identifiers.org/taxonomy/9606
-        $taxon = "/http:.*taxonomy\/(\d+)/";
+        'taxonomy' => array('pattern'=> "/http:.*taxonomy\/(\d+)/",'ns'=>'taxon'),
         
         // uniprot
         // http://identifiers.org/uniprot/Q9R1Z8
-        $uniprot = "/uniprot\/[A-Za-z0-9]+\"/";
-       
-        $tmp_file = $outdir."biopax_mappings.nt";
-        $th = fopen($unzipped_file,'w') or die("ERROR: Unable to open temp file");
+        'uniprot' => array('pattern'=>"/http:.*uniprot\/([A-Za-z0-9]+)/" ,'ns'=>'uniprot')
+    ); // end mapping 
+
+
         $handle = fopen($indir."pathwaycommons2-Sept2012.owl","r");
         if ($handle) {
             while (($buffer = fgets($handle, 4096)) != false){
-                preg_match($taxon,$buffer,$taxon_matches);
-                if ($taxon_matches[1]){
-                    $this->AddRDF($this->QQuadO_URL("taxon:".$taxon_matches[1],"owl:sameAs",$taxon_matches[0]));
+
+               preg_match('/http:\/\/identifiers\.org\/([a-zA-Z0-9]+)\/[a-zA-Z0-9]+/',$buffer,$match);
+                if($match){
+                    if ($url = $mapping[$match[1]]){
+                        preg_match($url['pattern'],$match[0],$m);
+                        $this->AddRDF($this->QQuadO_URL($url['ns'].":".$m[1],"owl:sameAs",$match[0]));
+                        $this->WriteRDFBufferToWriteFile();
+                    }
                 }
-                // echo $buffer
 
 
-                $this->WriteRDFBufferToWriteFile();
             }
 
             fclose($handle);
