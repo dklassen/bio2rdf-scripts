@@ -113,14 +113,12 @@ class BioPAXParser extends RDFFactory
 
                preg_match('/http:\/\/identifiers\.org\/([a-zA-Z0-9]+)\/[a-zA-Z0-9]+/',$buffer,$match);
                 if($match){
-                    if ($url = $mapping[$match[1]]){
+                    if ( array_key_exists($match[1],$mapping) && $url = $mapping[$match[1]]){
                         preg_match($url['pattern'],$match[0],$m);
                         $this->AddRDF($this->QQuadO_URL($url['ns'].":".$m[1],"owl:sameAs",$match[0]));
                         $this->WriteRDFBufferToWriteFile();
                     }
                 }
-
-
             }
 
             fclose($handle);
