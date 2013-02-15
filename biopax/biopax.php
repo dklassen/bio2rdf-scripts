@@ -66,13 +66,14 @@ class BioPAXParser extends RDFFactory
         
         if ($this->GetParameterValue('download')){
             $download = $this->GetParameterValue('download');
-            echo "INFO: Download file from ".$download;
-            file_put_contents($file,file_get_contents($download));
+            echo "INFO: Download file from ".$this->GetParameterValue('download_url');
+            file_put_contents($file,file_get_contents($this->GetParameterValue('download_url')));
         }
 
         echo "INFO: Unzipping ".$file."\n";
         $zip = new ZipArchive;
         if ($zip->open($file) === TRUE) {
+           echo "INFO: Extracting to".$indir."\n"; 
             $zip->extractTo($indir);
             $zip->close();
         } else {
