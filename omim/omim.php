@@ -346,7 +346,7 @@ class OMIMParser extends RDFFactory
 					}
 				}
 				if(isset($v['text'])) $this->AddRDF($this->QQuadText($uri,"dc:description",$v['text']));
-				if(isset($v['mutations'])) $this->AddRDF($this->QQuadText($uri,"omim_vocabulary:mutation",$v['mutations']));				
+				if(isset($v['mutations'])) $this->AddRDF($this->QQuadL($uri,"omim_vocabulary:mutation",$this->SafeLiteral($v['mutations'])));				
 				if(isset($v['dbSnps'])) {
 					$this->AddRDF($this->QQuad($uri, "omim_vocabulary:dbsnp", "dbsnp:".$v['dbSnps']));
 				}
