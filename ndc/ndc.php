@@ -248,17 +248,17 @@ class NDCParser extends RDFFactory
 					$this->AddRDF($this->QQuad($ndc_product,  "ndc_vocabulary:route", $route_id));
 				}
 			}
-			if($a[7])  $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:start-marketing-date", $a[7]));
-			if($a[8])  $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:end-marketing-date", $a[8]));
-			if($a[9])  $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:marketing-category", $a[9]));
-			if($a[10]) $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:application-number", $a[10]));
+			if($a[7])  $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:start-marketing-date",$this->SafeLiteral( $a[7])));
+			if($a[8])  $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:end-marketing-date",$this->SafeLiteral( $a[8])));
+			if($a[9])  $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:marketing-category",$this->SafeLiteral($a[9])));
+			if($a[10]) $this->AddRDF($this->QQuadL($ndc_product,  "ndc_vocabulary:application-number", $this->SafeLiteral($a[10])));
 			
 			// create a labeller node
 			if($a[11]) {
 				$labeller_id = "ndc_resource:".md5($a[11]);
 				if(!isset($list[$labeller_id])) {
 					$list[$labeller_id] = '';
-					$this->AddRDF($this->QQuadL($labeller_id,  "rdfs:label", addslashes($a[11])));
+					$this->AddRDF($this->QQuadL($labeller_id,  "rdfs:label", $this->SafeLiteral($a[11])));
 					$this->AddRDF($this->QQuad ($labeller_id,  "rdf:type", "ndc_vocabulary:Labeller"));
 				}
 				$this->AddRDF($this->QQuad($ndc_product,  "ndc_vocabulary:labeller", $labeller_id));
@@ -281,7 +281,7 @@ class NDCParser extends RDFFactory
 					$ingredient_id = "ndc_resource:".md5($ingredient_label);
 					if(!isset($list[$ingredient_id])) {
 						$list[$ingredient_id] = '';
-						$this->AddRDF($this->QQuadL($ingredient_id, "rdfs:label", $ingredient_label." [$ingredient_id]"));
+						$this->AddRDF($this->QQuadL($ingredient_id, "rdfs:label", $this->SafeLiteral($ingredient_label." [$ingredient_id]")));
 						$this->AddRDF($this->QQuad($ingredient_id, "rdf:type", "ndc_vocabulary:Ingredient"));
 					}
 					$this->AddRDF($this->QQuad($ndc_product,  "ndc_vocabulary:ingredient", $ingredient_id));
@@ -292,9 +292,9 @@ class NDCParser extends RDFFactory
 					$substance_id = "ndc_resource:".md5($substance_label);
 					if(!isset($list[$substance_id])) {
 						$list[$substance_id] = '';
-						$this->AddRDF($this->QQuadL($substance_id, "rdfs:label", $substance_label." [$substance_id]"));
+						$this->AddRDF($this->QQuadL($substance_id, "rdfs:label", $this->SafeLiteral($substance_label." [$substance_id]")));
 						$this->AddRDF($this->QQuad($substance_id, "rdf:type", "ndc_vocabulary:Substance"));
-						$this->AddRDF($this->QQuadL($substance_id, "ndc_vocabulary:amount", $strength));
+						$this->AddRDF($this->QQuadL($substance_id, "ndc_vocabulary:amount", $this->SafeLiteral($strength)));
 						
 						$unit_id = "ndc_vocabulary:".md5($unit);
 						if(!isset($list[$unit_id])) {
@@ -302,7 +302,7 @@ class NDCParser extends RDFFactory
 							$this->AddRDF($this->QQuadL($unit_id, "rdfs:label", $unit." [$unit_id]"));
 							$this->AddRDF($this->QQuad($unit_id, "rdfs:subClassOf", "ndc_vocabulary:Unit"));
 						}
-						$this->AddRDF($this->QQuad($substance_id, "ndc_vocabulary:amount_unit", $unit_id));
+						$this->AddRDF($this->QQuad($substance_id, "ndc_vocabulary:amount_unit", $this->SafeLiteral($unit_id)));
 					}
 					$this->AddRDF($this->QQuad($ndc_product,  "ndc_vocabulary:has-part", $substance_id));
 					
@@ -323,7 +323,7 @@ class NDCParser extends RDFFactory
 					$this->AddRDF($this->QQuad($ndc_product,  "ndc_vocabulary:pharmagocological-class", $cat_id));
 				}
 			}	
-			$this->AddRDF($this->QQuadL($ndc_product, "rdfs:label", $label." [$ndc_product]"));
+			$this->AddRDF($this->QQuadL($ndc_product, "rdfs:label",$this->SafeLiteral( $label." [$ndc_product]")));
 			 $this->WriteRDFBufferToWriteFile();
 			//echo $this->GetRDF();exit;
 		}
