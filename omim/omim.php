@@ -1,3 +1,4 @@
+#! /usr/bin/php
 <?php
 /**
 Copyright (C) 2012 Michel Dumontier
