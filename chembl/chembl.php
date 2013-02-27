@@ -297,7 +297,7 @@ class ChemblParser extends RDFFactory {
 
 
 	function set_write_file($name){
-		 $write_file = $this->GetParameterValue("outdir").$name.".ttl";
+		 $write_file = $this->GetParameterValue("outdir").$name.".nt";
 		 echo $write_file."----> processing\n";
 		 // set the compression
 		 $gz=false;
