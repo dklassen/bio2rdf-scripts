@@ -145,10 +145,10 @@ class EntrezGeneParser extends RDFFactory{
 
     // helper function to write some RDF 
     // NOTE :: Should be moved to Bio2RDF API
-    private function describe(type,idi,title=null){
+    private function describe($type,$ns,$id,$title=null){
         //typing, labels, and identifiers
-        $this->AddRDF($this->QQuad("geneid:".$id,"rdf:type","geneid_vocabulary:".$type));
-        $this->AddRDF($this->QQuadl("geneid:".$id,"dc:identifier",$id));
+        $this->AddRDF($this->QQuad($ns.":".$id,"rdf:type","geneid_vocabulary:".$type));
+        $this->AddRDF($this->QQuadl($ns.":".$id,"dc:identifier",$id));
         if($title){
             $this->AddRDF($this->QQuadl("geneid:".$id,"dc:title",$title));
         }
@@ -168,39 +168,51 @@ class EntrezGeneParser extends RDFFactory{
 					$proteinAccession = trim($splitLine[5]);
 					$vegaProteinId = trim($splitLine[6]);
                     
-                    $this->describeGene("Gene",$aGeneId);
+                    $this->describe("Gene","geneid",$aGeneId);
 
                     //taxid
 					$this->AddRDF($this->QQuad("geneid:".$aGeneId,
 							"geneid_vocabulary:has_taxid",
-							"taxon:".$taxid));
+                            "taxon:".$taxid));
+                    $this->describe("Taxon","taxon",$taxid);
+
 					//vega gene identifier
 					$this->AddRDF($this->QQuad("geneid:".$aGeneId,
 							"geneid_vocabulary:has_vega_gene",
-							"vega:".$vegaGeneId));
-					//rna nucleotide accession
+                            "vega:".$vegaGeneId));
+
+                    $this->describe("Vega_Gene","vega",$vegaGeneId);
+                    
+                    //rna nucleotide accession
 					if($rnaNucleotideAccession != "-"){
 						$this->AddRDF($this->QQuad("geneid:".$aGeneId,
 							"geneid_vocabulary:has_rna_nucleotide_accession",
-							"refseq:".$rnaNucleotideAccession));
+                            "refseq:".$rnaNucleotideAccession));
+                        $this->describe("Refseq_RNA","refseq",$rnaNucleotideAccession);
 					}
-					//vega rna id
+                    
+                    //vega rna id
 					if($vegaRnaIdentifier != "-"){
 						$this->AddRDF($this->QQuad("geneid:".$aGeneId,
 							"geneid_vocabulary:has_vega_rna_id",
 							"vega:".$vegaRnaIdentifier));
-					}
-					//protein accession
+                        $this->describe("Vega_RNA","vega",$vegaRnaIdentifier);
+                    }
+                    
+                    //protein accession
 					if($proteinAccession != "-"){
 						$this->AddRDF($this->QQuad("geneid:".$aGeneId,
 							"geneid_vocabulary:has_protein_accession",
 							"refseq:".$proteinAccession));
-					}
-					//vega protein
+                        $this->describe("NCBI_Protein","ncbi",$proteinAccession);
+                    }
+                    
+                    //vega protein
 					if($vegaProteinId != "-"){
 						$this->AddRDF($this->QQuad("geneid:".$aGeneId,
 							"geneid_vocabulary:has_vega_protein_id",
-							"vega:".$vegaProteinId));
+                            "vega:".$vegaProteinId));
+                        $this->describe("Vega_Protein","vega",$vegaProteinId);
 					}
 				}
 				$this->WriteRDFBufferToWriteFile();	
