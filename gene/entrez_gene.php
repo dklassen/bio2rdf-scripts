@@ -142,6 +142,18 @@ class EntrezGeneParser extends RDFFactory{
 		return TRUE;
 	}//run
 
+
+    // helper function to write some RDF 
+    // NOTE :: Should be moved to Bio2RDF API
+    private function describe(type,idi,title=null){
+        //typing, labels, and identifiers
+        $this->AddRDF($this->QQuad("geneid:".$id,"rdf:type","geneid_vocabulary:".$type));
+        $this->AddRDF($this->QQuadl("geneid:".$id,"dc:identifier",$id));
+        if($title){
+            $this->AddRDF($this->QQuadl("geneid:".$id,"dc:title",$title));
+        }
+    }
+
 	#see: ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/README
 	private function gene2vega(){
 		$this->GetReadFile()->Read(200000);
@@ -155,7 +167,10 @@ class EntrezGeneParser extends RDFFactory{
 					$vegaRnaIdentifier = trim($splitLine[4]);
 					$proteinAccession = trim($splitLine[5]);
 					$vegaProteinId = trim($splitLine[6]);
-					//taxid
+                    
+                    $this->describeGene("Gene",$aGeneId);
+
+                    //taxid
 					$this->AddRDF($this->QQuad("geneid:".$aGeneId,
 							"geneid_vocabulary:has_taxid",
 							"taxon:".$taxid));
