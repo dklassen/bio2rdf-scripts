@@ -1,3 +1,4 @@
+#! /usr/bin/php
 <?php
 /**
 Copyright (C) 2012 Michel Dumontier
@@ -219,7 +220,7 @@ class OMIMParser extends RDFFactory
 		if($generate_declaration == true) {
 			foreach($pmm AS $i => $o) {
 				$pmm_uri = "omim_vocabulary:".$pmm[$i]['name'];
-				$this->AddRDF($this->QQuadL($pmm_uri, "rdfs:label", $pmm[$pid]['description']." [$pmm_uri]"));
+				$this->AddRDF($this->QQuadL($pmm_uri, "rdfs:label",$this->SafeLiteral($pmm[$pid]['description']." [$pmm_uri]")));
 			}
 		}
 			
@@ -345,8 +346,8 @@ class OMIMParser extends RDFFactory
 						$this->AddRDF($this->QQuadL($uri,"omim_vocabulary:alternative-names",$name));				
 					}
 				}
-				if(isset($v['text'])) $this->AddRDF($this->QQuadText($uri,"dc:description",$v['text']));
-				if(isset($v['mutations'])) $this->AddRDF($this->QQuadText($uri,"omim_vocabulary:mutation",$v['mutations']));				
+				if(isset($v['text'])) $this->AddRDF($this->QQuadL($uri,"dc:description",$this->SafeLiteral($v['text'])));
+				if(isset($v['mutations'])) $this->AddRDF($this->QQuadL($uri,"omim_vocabulary:mutation",$this->SafeLiteral($v['mutations'])));				
 				if(isset($v['dbSnps'])) {
 					$this->AddRDF($this->QQuad($uri, "omim_vocabulary:dbsnp", "dbsnp:".$v['dbSnps']));
 				}
